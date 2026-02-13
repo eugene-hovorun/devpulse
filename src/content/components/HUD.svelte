@@ -395,9 +395,9 @@
       {/if}
 
       <!-- Footer -->
-      <div class="pt-1 mt-1 border-t border-hud-border-subtle">
+      <div class="pt-1 mt-1 flex justify-center">
         <span class="text-[9px] text-hud-fg-muted tracking-wide">
-          Page: {uptime}
+          {uptime}
         </span>
       </div>
     </div>
