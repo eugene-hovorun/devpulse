@@ -7,7 +7,6 @@ export interface MetricsSnapshot {
   domHistory: number[];
   memory: number;
   memoryHistory: number[];
-  cls: number;
   longTasks: number;
   longTasksRecent: number;
   lcp: number | null;
@@ -32,7 +31,6 @@ const state: MetricsSnapshot = {
   domHistory: [],
   memory: 0,
   memoryHistory: [],
-  cls: 0,
   longTasks: 0,
   longTasksRecent: 0,
   lcp: null,
@@ -77,7 +75,7 @@ export function tick(now: number): MetricsSnapshot {
     state.netRequests = entries.length;
     state.netSize = entries.reduce(
       (sum, e) => sum + ((e as PerformanceResourceTiming).transferSize || 0),
-      0
+      0,
     );
   }
 
@@ -87,16 +85,6 @@ export function tick(now: number): MetricsSnapshot {
 // ── Observer-based collectors (set up once) ────────────────────────────
 
 export function initObservers(): void {
-  try {
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
-          state.cls += (entry as any).value;
-        }
-      }
-    }).observe({ type: "layout-shift", buffered: true });
-  } catch (_) {}
-
   try {
     new PerformanceObserver((list) => {
       const count = list.getEntries().length;

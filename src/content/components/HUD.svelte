@@ -50,10 +50,21 @@
     fps: { warn: 45, danger: 30 },
     dom: { warn: 1500, danger: 3000 },
     memory: { warn: 50, danger: 100 },
-    cls: { warn: 0.1, danger: 0.25 },
     longTasks: { warn: 3, danger: 10 },
     lcp: { warn: 2500, danger: 4000 },
     fcp: { warn: 1800, danger: 3000 },
+  };
+
+  // ── Metric Help Links ─────────────────────────────────────────────
+
+  const HELP: Record<string, string> = {
+    fps: "https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame",
+    dom: "https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model",
+    mem: "https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory",
+    long: "https://web.dev/articles/long-tasks-devtools",
+    net: "https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming",
+    fcp: "https://web.dev/articles/fcp",
+    lcp: "https://web.dev/articles/lcp",
   };
 
   function status(
@@ -189,7 +200,6 @@
         fps: snap.fps,
         domNodes: snap.dom,
         memoryMB: snap.memory,
-        cls: snap.cls,
         longTasks: snap.longTasks,
         lcpMs: snap.lcp,
         fcpMs: snap.fcp,
@@ -300,6 +310,7 @@
         value={String(snap.fps)}
         status={status("fps", snap.fps)}
         history={snap.fpsHistory}
+        helpUrl={HELP.fps}
         {showHistory}
       />
       <MetricRow
@@ -307,6 +318,7 @@
         value={snap.dom.toLocaleString()}
         status={status("dom", snap.dom)}
         history={snap.domHistory}
+        helpUrl={HELP.dom}
         {showHistory}
       />
 
@@ -316,18 +328,12 @@
           value={snap.memory + " MB"}
           status={status("memory", snap.memory)}
           history={snap.memoryHistory}
+          helpUrl={HELP.mem}
           {showHistory}
           locked={!isPremium}
           onunlock={openPayment}
         />
       {/if}
-      <MetricRow
-        label="CLS"
-        value={snap.cls.toFixed(4)}
-        status={status("cls", snap.cls)}
-        locked={!isPremium}
-        onunlock={openPayment}
-      />
       <MetricRow
         label="LONG"
         value={snap.longTasks +
@@ -335,29 +341,32 @@
             ? ` <span style="display:inline-block;font-size:9px;font-weight:700;padding:0 4px;border-radius:3px;background:color-mix(in srgb,var(--hud-danger) 20%,transparent);color:var(--hud-danger);margin-left:2px">+${snap.longTasksRecent}</span>`
             : "")}
         status={status("longTasks", snap.longTasks)}
+        helpUrl={HELP.long}
         locked={!isPremium}
         onunlock={openPayment}
       />
       <MetricRow
         label="NET"
         value={`${snap.netRequests} req · ${fmtBytes(snap.netSize)}`}
+        helpUrl={HELP.net}
         locked={!isPremium}
         onunlock={openPayment}
       />
 
       <!-- Vitals -->
       {#if snap.fcp !== null || snap.lcp !== null}
-        <div class="flex gap-2 pt-1.5 mt-1 border-t border-hud-border">
+        <div class="flex gap-3 pt-1.5 mt-1 border-t border-hud-border">
           {#if snap.fcp !== null}
             {#if isPremium}
-              <div class="flex items-baseline gap-1">
+              <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">FCP</span>
-                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("fcp", snap.fcp))}`}>
-                  {fmtTime(snap.fcp)}
-                </span>
+                <a href={HELP.fcp} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-3 h-3 rounded-full text-hud-fg-muted opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="Learn more about FCP" onclick={(e: MouseEvent) => e.stopPropagation()}>
+                  <svg width="7" height="7" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.5a.75.75 0 0 1 1.5 0v.5a.75.75 0 0 1-1.5 0v-.5ZM8 7a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 7Z"/></svg>
+                </a>
+                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("fcp", snap.fcp))}`}>{fmtTime(snap.fcp)}</span>
               </div>
             {:else}
-              <div class="flex items-baseline gap-1">
+              <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">FCP</span>
                 <button class="text-[8px] font-bold uppercase tracking-wider text-hud-pro bg-hud-pro-bg px-1.5 py-px rounded cursor-pointer hover:opacity-80 transition-opacity" onclick={openPayment}>PRO</button>
               </div>
@@ -366,14 +375,15 @@
 
           {#if snap.lcp !== null}
             {#if isPremium}
-              <div class="flex items-baseline gap-1">
+              <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">LCP</span>
-                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("lcp", snap.lcp))}`}>
-                  {fmtTime(snap.lcp)}
-                </span>
+                <a href={HELP.lcp} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-3 h-3 rounded-full text-hud-fg-muted opacity-40 hover:opacity-100 transition-opacity cursor-pointer" title="Learn more about LCP" onclick={(e: MouseEvent) => e.stopPropagation()}>
+                  <svg width="7" height="7" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.5a.75.75 0 0 1 1.5 0v.5a.75.75 0 0 1-1.5 0v-.5ZM8 7a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 7Z"/></svg>
+                </a>
+                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("lcp", snap.lcp))}`}>{fmtTime(snap.lcp)}</span>
               </div>
             {:else}
-              <div class="flex items-baseline gap-1">
+              <div class="flex items-center gap-1">
                 <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">LCP</span>
                 <button class="text-[8px] font-bold uppercase tracking-wider text-hud-pro bg-hud-pro-bg px-1.5 py-px rounded cursor-pointer hover:opacity-80 transition-opacity" onclick={openPayment}>PRO</button>
               </div>

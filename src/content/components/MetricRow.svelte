@@ -8,6 +8,7 @@
     history?: number[];
     showHistory?: boolean;
     locked?: boolean;
+    helpUrl?: string;
     onunlock?: () => void;
   }
 
@@ -18,6 +19,7 @@
     history,
     showHistory = true,
     locked = false,
+    helpUrl,
     onunlock,
   }: Props = $props();
 
@@ -33,10 +35,22 @@
 <div
   class="flex items-center py-[3px] gap-1.5 border-b border-hud-border-subtle last:border-b-0"
 >
-  <span
-    class="w-9 shrink-0 text-[9px] font-bold tracking-widest uppercase text-hud-fg-muted"
-  >
-    {label}
+  <span class="w-9 shrink-0 flex items-center gap-0.5">
+    <span class="text-[9px] font-bold tracking-widest uppercase text-hud-fg-muted">{label}</span>
+    {#if helpUrl}
+      <a
+        href={helpUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center justify-center w-3 h-3 rounded-full text-hud-fg-muted opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
+        title="Learn more about {label}"
+        onclick={(e: MouseEvent) => e.stopPropagation()}
+      >
+        <svg width="7" height="7" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.5a.75.75 0 0 1 1.5 0v.5a.75.75 0 0 1-1.5 0v-.5ZM8 7a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 7Z"/>
+        </svg>
+      </a>
+    {/if}
   </span>
 
   {#if locked}
