@@ -6,27 +6,36 @@
 
   // ── Props ──────────────────────────────────────────────────────────
 
+  type Theme = "dark" | "light" | "system";
+
   interface Props {
     isPremium?: boolean;
     showHistory?: boolean;
     initialCollapsed?: boolean;
+    initialTheme?: Theme;
     ondestroy?: () => void;
     onposchange?: (x: number, y: number) => void;
     oncollapsedchange?: (collapsed: boolean) => void;
+    onthemechange?: (theme: Theme) => void;
   }
 
   let {
     isPremium = false,
     showHistory = true,
     initialCollapsed = false,
+    initialTheme = "dark",
     ondestroy,
     onposchange,
     oncollapsedchange,
+    onthemechange,
   }: Props = $props();
 
   // ── State ──────────────────────────────────────────────────────────
-// svelte-ignore state_referenced_locally
+
+  // svelte-ignore state_referenced_locally
   let collapsed = $state(initialCollapsed);
+  // svelte-ignore state_referenced_locally
+  let theme = $state<Theme>(initialTheme);
   let dragging = $state(false);
   let snap: MetricsSnapshot | null = $state(null);
   let exportFlash = $state(false);
@@ -62,6 +71,14 @@
     return "ok";
   }
 
+  function statusClass(s: "ok" | "warn" | "danger"): string {
+    return s === "ok"
+      ? "text-hud-ok"
+      : s === "warn"
+        ? "text-hud-warn"
+        : "text-hud-danger";
+  }
+
   // ── Formatters ─────────────────────────────────────────────────────
 
   function fmtBytes(bytes: number): string {
@@ -86,7 +103,6 @@
 
   onMount(() => {
     initObservers();
-
     const loop = (now: number) => {
       snap = { ...collectMetrics(now) };
       rafId = requestAnimationFrame(loop);
@@ -115,14 +131,8 @@
 
   function onDragMove(e: MouseEvent) {
     if (!dragging || !hostEl) return;
-    const x = Math.max(
-      0,
-      Math.min(window.innerWidth - 50, e.clientX - dragOffset.x)
-    );
-    const y = Math.max(
-      0,
-      Math.min(window.innerHeight - 30, e.clientY - dragOffset.y)
-    );
+    const x = Math.max(0, Math.min(window.innerWidth - 50, e.clientX - dragOffset.x));
+    const y = Math.max(0, Math.min(window.innerHeight - 30, e.clientY - dragOffset.y));
     hostEl.style.left = x + "px";
     hostEl.style.top = y + "px";
     hostEl.style.right = "auto";
@@ -151,6 +161,12 @@
   function toggleCollapse() {
     collapsed = !collapsed;
     oncollapsedchange?.(collapsed);
+  }
+
+  function cycleTheme() {
+    const order: Theme[] = ["dark", "light", "system"];
+    theme = order[(order.indexOf(theme) + 1) % order.length];
+    onthemechange?.(theme);
   }
 
   function handleClose() {
@@ -211,69 +227,67 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="rounded-[10px] border border-white/[0.08] bg-[#0d0d11]/[0.94] backdrop-blur-[16px] saturate-[1.4] shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.04)] min-w-[220px] max-w-[280px] overflow-hidden animate-[fadeIn_0.25s_ease-out] text-[11px] leading-[1.4] text-[#c8cad4]"
-  class:opacity-80={dragging}
+  class={`rounded-[10px] border border-hud-border bg-hud-bg backdrop-blur-[16px] saturate-[1.4] min-w-[220px] max-w-[280px] overflow-hidden animate-[fadeIn_0.25s_ease-out] text-[11px] leading-[1.4] text-hud-fg-dim ${dragging ? "opacity-80" : ""}`}
+  style="box-shadow: var(--hud-shadow);"
 >
   <!-- Header -->
   <div
-    class="flex items-center justify-between py-[7px] px-2.5 bg-[#14141c]/[0.98] border-b border-white/[0.08] cursor-grab"
-    class:!border-b-0={collapsed}
-    class:rounded-[10px]={collapsed}
-    class:!rounded-b-none={!collapsed}
+    class={`flex items-center justify-between py-[7px] px-2.5 bg-hud-bg-header border-b border-hud-border cursor-grab ${collapsed ? "rounded-[10px] !border-b-0" : ""}`}
     onmousedown={onDragStart}
   >
     <div class="flex items-center gap-[5px]">
       <span class="text-xs leading-none">⚡</span>
-      <span class="text-[11px] font-bold text-[#ebedf5] tracking-wide uppercase"
-        >DevPulse</span
-      >
+      <span class="text-[11px] font-bold text-hud-fg tracking-wide uppercase">DevPulse</span>
     </div>
     <div class="flex items-center gap-1">
+      <!-- Theme toggle -->
+      <button
+        data-action="theme"
+        class="w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-fg transition-colors cursor-pointer"
+        style="hover:background: var(--hud-btn-hover);"
+        title="Theme: {theme}"
+        onclick={cycleTheme}
+      >
+        {#if theme === "light"}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        {:else if theme === "dark"}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        {:else}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        {/if}
+      </button>
+      <!-- Collapse -->
       <button
         data-action="collapse"
-        class="w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-white/[0.08] hover:text-[#ebedf5] transition-colors cursor-pointer"
+        class="w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-fg transition-colors cursor-pointer"
         title="Collapse"
         onclick={toggleCollapse}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10"
-          ><path
-            d="M1 4h8"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          /></svg
-        >
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 4h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
+      <!-- Export -->
       <button
         data-action="export"
-        class="w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-white/[0.08] hover:text-[#ebedf5] transition-colors cursor-pointer"
+        class={`w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-fg transition-colors cursor-pointer ${exportFlash ? "!text-hud-ok" : ""}`}
         title="Export snapshot"
         onclick={handleExport}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10"
-          ><path
-            d="M5 1v6M2 4l3-3 3 3M1 8h8"
-            stroke="currentColor"
-            stroke-width="1.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          /></svg
-        >
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1v6M2 4l3-3 3 3M1 8h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <!-- Close -->
       <button
         data-action="close"
-        class="w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-[#ff4d4f]/20 hover:text-[#ff4d4f] transition-colors cursor-pointer"
+        class="w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-danger transition-colors cursor-pointer"
         title="Close"
         onclick={handleClose}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10"
-          ><path
-            d="M2 2l6 6M8 2l-6 6"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          /></svg
-        >
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
   </div>
@@ -281,7 +295,6 @@
   <!-- Body (expanded) -->
   {#if !collapsed && snap}
     <div class="py-2 px-2.5">
-      <!-- Free metrics -->
       <MetricRow
         label="FPS"
         value={String(snap.fps)}
@@ -297,7 +310,6 @@
         {showHistory}
       />
 
-      <!-- Premium metrics -->
       {#if (performance as any).memory}
         <MetricRow
           label="MEM"
@@ -320,7 +332,7 @@
         label="LONG"
         value={snap.longTasks +
           (snap.longTasksRecent > 0
-            ? ` <span class="inline-block text-[9px] font-bold px-1 rounded bg-[#ff4d4f]/20 text-[#ff4d4f] ml-0.5">+${snap.longTasksRecent}</span>`
+            ? ` <span style="display:inline-block;font-size:9px;font-weight:700;padding:0 4px;border-radius:3px;background:color-mix(in srgb,var(--hud-danger) 20%,transparent);color:var(--hud-danger);margin-left:2px">+${snap.longTasksRecent}</span>`
             : "")}
         status={status("longTasks", snap.longTasks)}
         locked={!isPremium}
@@ -335,27 +347,19 @@
 
       <!-- Vitals -->
       {#if snap.fcp !== null || snap.lcp !== null}
-        <div class="flex gap-2 pt-1.5 mt-1 border-t border-white/[0.08]">
+        <div class="flex gap-2 pt-1.5 mt-1 border-t border-hud-border">
           {#if snap.fcp !== null}
             {#if isPremium}
               <div class="flex items-baseline gap-1">
-                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">FCP</span>
-                <span
-                  class="text-[11px] font-semibold tabular-nums"
-                  class:text-[#52c41a]={status("fcp", snap.fcp) === "ok"}
-                  class:text-[#faad14]={status("fcp", snap.fcp) === "warn"}
-                  class:text-[#ff4d4f]={status("fcp", snap.fcp) === "danger"}
-                >
+                <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">FCP</span>
+                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("fcp", snap.fcp))}`}>
                   {fmtTime(snap.fcp)}
                 </span>
               </div>
             {:else}
               <div class="flex items-baseline gap-1">
-                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">FCP</span>
-                <button
-                  class="text-[8px] font-bold uppercase tracking-wider text-[#6c8aff] bg-[#6c8aff]/[0.12] px-1.5 py-px rounded cursor-pointer hover:bg-[#6c8aff]/[0.22] transition-colors"
-                  onclick={openPayment}>PRO</button
-                >
+                <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">FCP</span>
+                <button class="text-[8px] font-bold uppercase tracking-wider text-hud-pro bg-hud-pro-bg px-1.5 py-px rounded cursor-pointer hover:opacity-80 transition-opacity" onclick={openPayment}>PRO</button>
               </div>
             {/if}
           {/if}
@@ -363,23 +367,15 @@
           {#if snap.lcp !== null}
             {#if isPremium}
               <div class="flex items-baseline gap-1">
-                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">LCP</span>
-                <span
-                  class="text-[11px] font-semibold tabular-nums"
-                  class:text-[#52c41a]={status("lcp", snap.lcp) === "ok"}
-                  class:text-[#faad14]={status("lcp", snap.lcp) === "warn"}
-                  class:text-[#ff4d4f]={status("lcp", snap.lcp) === "danger"}
-                >
+                <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">LCP</span>
+                <span class={`text-[11px] font-semibold tabular-nums ${statusClass(status("lcp", snap.lcp))}`}>
                   {fmtTime(snap.lcp)}
                 </span>
               </div>
             {:else}
               <div class="flex items-baseline gap-1">
-                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">LCP</span>
-                <button
-                  class="text-[8px] font-bold uppercase tracking-wider text-[#6c8aff] bg-[#6c8aff]/[0.12] px-1.5 py-px rounded cursor-pointer hover:bg-[#6c8aff]/[0.22] transition-colors"
-                  onclick={openPayment}>PRO</button
-                >
+                <span class="text-[9px] font-bold tracking-wider text-hud-fg-muted">LCP</span>
+                <button class="text-[8px] font-bold uppercase tracking-wider text-hud-pro bg-hud-pro-bg px-1.5 py-px rounded cursor-pointer hover:opacity-80 transition-opacity" onclick={openPayment}>PRO</button>
               </div>
             {/if}
           {/if}
@@ -387,8 +383,8 @@
       {/if}
 
       <!-- Footer -->
-      <div class="pt-1 mt-1 border-t border-white/[0.03]">
-        <span class="text-[9px] text-[#6b6e80] tracking-wide">
+      <div class="pt-1 mt-1 border-t border-hud-border-subtle">
+        <span class="text-[9px] text-hud-fg-muted tracking-wide">
           Page: {uptime}
         </span>
       </div>
@@ -401,26 +397,16 @@
       class="flex items-center gap-1 py-1.5 px-2.5 cursor-pointer"
       onclick={toggleCollapse}
     >
-      <span
-        class="text-[10px] font-semibold tabular-nums"
-        class:text-[#52c41a]={status("fps", snap.fps) === "ok"}
-        class:text-[#faad14]={status("fps", snap.fps) === "warn"}
-        class:text-[#ff4d4f]={status("fps", snap.fps) === "danger"}
-      >
+      <span class={`text-[10px] font-semibold tabular-nums ${statusClass(status("fps", snap.fps))}`}>
         {snap.fps} FPS
       </span>
-      <span class="text-[10px] text-[#6b6e80] mx-px">·</span>
-      <span
-        class="text-[10px] font-semibold tabular-nums"
-        class:text-[#52c41a]={status("dom", snap.dom) === "ok"}
-        class:text-[#faad14]={status("dom", snap.dom) === "warn"}
-        class:text-[#ff4d4f]={status("dom", snap.dom) === "danger"}
-      >
+      <span class="text-[10px] text-hud-fg-muted mx-px">·</span>
+      <span class={`text-[10px] font-semibold tabular-nums ${statusClass(status("dom", snap.dom))}`}>
         {snap.dom.toLocaleString()} DOM
       </span>
       {#if snap.memory}
-        <span class="text-[10px] text-[#6b6e80] mx-px">·</span>
-        <span class="text-[10px] font-semibold tabular-nums text-[#ebedf5]">
+        <span class="text-[10px] text-hud-fg-muted mx-px">·</span>
+        <span class="text-[10px] font-semibold tabular-nums text-hud-fg">
           {snap.memory}MB
         </span>
       {/if}

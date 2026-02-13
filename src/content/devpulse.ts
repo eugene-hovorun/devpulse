@@ -1,5 +1,4 @@
 // DevPulse — Content Script Entry
-// Shadow DOM on a plain <div>, no customElements API needed
 
 import { mount, unmount } from "svelte";
 import HUD from "./components/HUD.svelte";
@@ -12,7 +11,10 @@ const KEYS = {
   active: "devpulse_active",
   pos: "devpulse_pos",
   collapsed: "devpulse_collapsed",
+  theme: "devpulse_theme",
 };
+
+type Theme = "dark" | "light" | "system";
 
 function loadPos(): { x: number; y: number } | null {
   try {
@@ -29,10 +31,34 @@ function loadCollapsed(): boolean {
   return false;
 }
 
+function loadTheme(): Theme {
+  try {
+    const val = localStorage.getItem(KEYS.theme);
+    if (val === "dark" || val === "light" || val === "system") return val;
+  } catch (_) {}
+  return "dark";
+}
+
+function resolveTheme(theme: Theme): "dark" | "light" {
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+  return theme;
+}
+
+function applyTheme(theme: Theme) {
+  if (!hostElement) return;
+  const resolved = resolveTheme(theme);
+  hostElement.classList.toggle("light", resolved === "light");
+}
+
 function create(isPremium: boolean) {
   if (hostElement) destroy();
 
   const savedPos = loadPos();
+  const theme = loadTheme();
 
   hostElement = document.createElement("div");
   hostElement.id = "devpulse-root";
@@ -53,6 +79,7 @@ function create(isPremium: boolean) {
   shadow.appendChild(target);
 
   document.documentElement.appendChild(hostElement);
+  applyTheme(theme);
 
   svelteApp = mount(HUD, {
     target,
@@ -60,6 +87,7 @@ function create(isPremium: boolean) {
       isPremium,
       showHistory: true,
       initialCollapsed: loadCollapsed(),
+      initialTheme: theme,
       ondestroy: () => destroy(),
       onposchange: (x: number, y: number) => {
         try {
@@ -70,6 +98,12 @@ function create(isPremium: boolean) {
         try {
           localStorage.setItem(KEYS.collapsed, String(val));
         } catch (_) {}
+      },
+      onthemechange: (val: Theme) => {
+        try {
+          localStorage.setItem(KEYS.theme, val);
+        } catch (_) {}
+        applyTheme(val);
       },
     },
   });

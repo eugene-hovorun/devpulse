@@ -10,6 +10,48 @@
   z-index: 2147483647;
   pointer-events: auto;
   user-select: none;
-  font-family: "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code",
-    ui-monospace, monospace;
+  font-family:
+    "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace,
+    monospace;
+
+  /* Dark theme (default) */
+  --hud-bg: rgba(13, 13, 17, 0.94);
+  --hud-bg-header: rgba(20, 20, 28, 0.98);
+  --hud-fg: #ebedf5;
+  --hud-fg-dim: #c8cad4;
+  --hud-fg-muted: #6b6e80;
+  --hud-border: rgba(60, 63, 80, 0.4);
+  --hud-border-subtle: rgba(255, 255, 255, 0.03);
+  --hud-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --hud-ok: #52c41a;
+  --hud-warn: #faad14;
+  --hud-danger: #ff4d4f;
+  --hud-pro: #6c8aff;
+  --hud-pro-bg: rgba(108, 138, 255, 0.12);
+  --hud-locked: #3a3c4a;
+  --hud-btn-hover: rgba(255, 255, 255, 0.08);
+  --hud-backdrop: blur(16px) saturate(1.4);
+}
+
+:host(.light) {
+  --hud-bg: rgba(255, 255, 255, 0.94);
+  --hud-bg-header: rgba(245, 245, 248, 0.98);
+  --hud-fg: #1a1c24;
+  --hud-fg-dim: #3a3d4a;
+  --hud-fg-muted: #8b8fa0;
+  --hud-border: rgba(0, 0, 0, 0.08);
+  --hud-border-subtle: rgba(0, 0, 0, 0.04);
+  --hud-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --hud-ok: #389e0d;
+  --hud-warn: #d48806;
+  --hud-danger: #cf1322;
+  --hud-pro: #4361ee;
+  --hud-pro-bg: rgba(67, 97, 238, 0.1);
+  --hud-locked: #c8cad4;
+  --hud-btn-hover: rgba(0, 0, 0, 0.06);
+  --hud-backdrop: blur(16px) saturate(1.2);
 }
