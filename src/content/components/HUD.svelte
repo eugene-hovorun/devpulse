@@ -245,8 +245,7 @@
     class={`flex items-center justify-between py-[7px] px-2.5 bg-hud-bg-header border-b border-hud-border cursor-grab ${collapsed ? "rounded-[10px] !border-b-0" : ""}`}
     onmousedown={onDragStart}
   >
-    <div class="flex items-center gap-[5px]">
-      <span class="text-xs leading-none">⚡</span>
+    <div>
       <span class="text-[11px] font-bold text-hud-fg tracking-wide uppercase">DevPulse</span>
     </div>
     <div class="flex items-center gap-1">
