@@ -272,15 +272,6 @@
           </svg>
         {/if}
       </button>
-      <!-- Collapse -->
-      <button
-        data-action="collapse"
-        class="w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-fg transition-colors cursor-pointer"
-        title="Collapse"
-        onclick={toggleCollapse}
-      >
-        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 4h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
       <!-- Export -->
       <button
         data-action="export"
@@ -289,6 +280,17 @@
         onclick={handleExport}
       >
         <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1v6M2 4l3-3 3 3M1 8h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <!-- Separator -->
+       <div class="p-1"></div>
+      <!-- Collapse -->
+      <button
+        data-action="collapse"
+        class="w-5 h-5 flex items-center justify-center rounded text-hud-fg-muted hover:text-hud-fg transition-colors cursor-pointer"
+        title="Collapse"
+        onclick={toggleCollapse}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 4h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
       <!-- Close -->
       <button
