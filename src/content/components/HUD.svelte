@@ -3,21 +3,30 @@
   import { tick as collectMetrics, initObservers } from "../metrics";
   import type { MetricsSnapshot } from "../metrics";
   import MetricRow from "./MetricRow.svelte";
-  import Sparkline from "./Sparkline.svelte";
 
   // ── Props ──────────────────────────────────────────────────────────
 
   interface Props {
     isPremium?: boolean;
     showHistory?: boolean;
+    initialCollapsed?: boolean;
     ondestroy?: () => void;
+    onposchange?: (x: number, y: number) => void;
+    oncollapsedchange?: (collapsed: boolean) => void;
   }
 
-  let { isPremium = false, showHistory = true, ondestroy }: Props = $props();
+  let {
+    isPremium = false,
+    showHistory = true,
+    initialCollapsed = false,
+    ondestroy,
+    onposchange,
+    oncollapsedchange,
+  }: Props = $props();
 
   // ── State ──────────────────────────────────────────────────────────
-
-  let collapsed = $state(false);
+// svelte-ignore state_referenced_locally
+  let collapsed = $state(initialCollapsed);
   let dragging = $state(false);
   let snap: MetricsSnapshot | null = $state(null);
   let exportFlash = $state(false);
@@ -68,7 +77,6 @@
   }
 
   let uptime = $derived.by(() => {
-    // Trigger recalc whenever snap updates
     if (!snap) return "0m 0s";
     const elapsed = Math.round(performance.now() / 1000);
     return `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
@@ -96,7 +104,7 @@
     if ((e.target as HTMLElement).closest("[data-action]")) return;
     dragging = true;
     const root = (e.currentTarget as HTMLElement).getRootNode() as ShadowRoot;
-    hostEl = root?.host as HTMLElement ?? null;
+    hostEl = (root?.host as HTMLElement) ?? null;
     if (hostEl) {
       const rect = hostEl.getBoundingClientRect();
       dragOffset.x = e.clientX - rect.left;
@@ -121,13 +129,14 @@
   }
 
   function onDragEnd() {
-    if (dragging) {
+    if (dragging && hostEl) {
+      const rect = hostEl.getBoundingClientRect();
+      onposchange?.(Math.round(rect.left), Math.round(rect.top));
       dragging = false;
       hostEl = null;
     }
   }
 
-  // Attach document-level drag listeners
   onMount(() => {
     document.addEventListener("mousemove", onDragMove);
     document.addEventListener("mouseup", onDragEnd);
@@ -138,6 +147,11 @@
   });
 
   // ── Actions ────────────────────────────────────────────────────────
+
+  function toggleCollapse() {
+    collapsed = !collapsed;
+    oncollapsedchange?.(collapsed);
+  }
 
   function handleClose() {
     if (rafId) cancelAnimationFrame(rafId);
@@ -219,7 +233,7 @@
         data-action="collapse"
         class="w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-white/[0.08] hover:text-[#ebedf5] transition-colors cursor-pointer"
         title="Collapse"
-        onclick={() => (collapsed = !collapsed)}
+        onclick={toggleCollapse}
       >
         <svg width="10" height="10" viewBox="0 0 10 10"
           ><path
@@ -232,9 +246,7 @@
       </button>
       <button
         data-action="export"
-        class={`w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-white/[0.08] hover:text-[#ebedf5] transition-colors cursor-pointer ${
-          exportFlash ? "!bg-[#52c41a]/25 !text-[#52c41a]" : ""
-        }`}
+        class="w-5 h-5 flex items-center justify-center rounded text-[#6b6e80] hover:bg-white/[0.08] hover:text-[#ebedf5] transition-colors cursor-pointer"
         title="Export snapshot"
         onclick={handleExport}
       >
@@ -323,16 +335,11 @@
 
       <!-- Vitals -->
       {#if snap.fcp !== null || snap.lcp !== null}
-        <div
-          class="flex gap-2 pt-1.5 mt-1 border-t border-white/[0.08]"
-        >
+        <div class="flex gap-2 pt-1.5 mt-1 border-t border-white/[0.08]">
           {#if snap.fcp !== null}
             {#if isPremium}
               <div class="flex items-baseline gap-1">
-                <span
-                  class="text-[9px] font-bold tracking-wider text-[#6b6e80]"
-                  >FCP</span
-                >
+                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">FCP</span>
                 <span
                   class="text-[11px] font-semibold tabular-nums"
                   class:text-[#52c41a]={status("fcp", snap.fcp) === "ok"}
@@ -344,10 +351,7 @@
               </div>
             {:else}
               <div class="flex items-baseline gap-1">
-                <span
-                  class="text-[9px] font-bold tracking-wider text-[#6b6e80]"
-                  >FCP</span
-                >
+                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">FCP</span>
                 <button
                   class="text-[8px] font-bold uppercase tracking-wider text-[#6c8aff] bg-[#6c8aff]/[0.12] px-1.5 py-px rounded cursor-pointer hover:bg-[#6c8aff]/[0.22] transition-colors"
                   onclick={openPayment}>PRO</button
@@ -359,10 +363,7 @@
           {#if snap.lcp !== null}
             {#if isPremium}
               <div class="flex items-baseline gap-1">
-                <span
-                  class="text-[9px] font-bold tracking-wider text-[#6b6e80]"
-                  >LCP</span
-                >
+                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">LCP</span>
                 <span
                   class="text-[11px] font-semibold tabular-nums"
                   class:text-[#52c41a]={status("lcp", snap.lcp) === "ok"}
@@ -374,10 +375,7 @@
               </div>
             {:else}
               <div class="flex items-baseline gap-1">
-                <span
-                  class="text-[9px] font-bold tracking-wider text-[#6b6e80]"
-                  >LCP</span
-                >
+                <span class="text-[9px] font-bold tracking-wider text-[#6b6e80]">LCP</span>
                 <button
                   class="text-[8px] font-bold uppercase tracking-wider text-[#6c8aff] bg-[#6c8aff]/[0.12] px-1.5 py-px rounded cursor-pointer hover:bg-[#6c8aff]/[0.22] transition-colors"
                   onclick={openPayment}>PRO</button
@@ -389,9 +387,7 @@
       {/if}
 
       <!-- Footer -->
-      <div
-        class="pt-1 mt-1 border-t border-white/[0.03]"
-      >
+      <div class="pt-1 mt-1 border-t border-white/[0.03]">
         <span class="text-[9px] text-[#6b6e80] tracking-wide">
           Page: {uptime}
         </span>
@@ -403,7 +399,7 @@
   {#if collapsed && snap}
     <div
       class="flex items-center gap-1 py-1.5 px-2.5 cursor-pointer"
-      onclick={() => (collapsed = false)}
+      onclick={toggleCollapse}
     >
       <span
         class="text-[10px] font-semibold tabular-nums"
