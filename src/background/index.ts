@@ -33,7 +33,10 @@ chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   const tabId = tab.id;
 
-  if (activeTabs.has(tabId)) {
+  // Ask the content script if HUD is currently mounted
+  const isActive = await isHudActive(tabId);
+
+  if (isActive) {
     // HUD visible → hide it
     try {
       await chrome.tabs.sendMessage(tabId, { action: "destroy" });
@@ -44,8 +47,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     const isPremium = await getPremium();
     const url = tab.url || "";
     const isLocalhost =
-      url.startsWith("http://localhost") ||
-      url.startsWith("http://127.0.0.1");
+      url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1");
 
     if (!injectedTabs.has(tabId) && !isLocalhost) {
       // Not localhost and not yet injected — inject via scripting API
@@ -121,6 +123,15 @@ async function getPremium(): Promise<boolean> {
   try {
     const result = await chrome.storage.local.get("isPremium");
     return result.isPremium === true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function isHudActive(tabId: number): Promise<boolean> {
+  try {
+    const response = await chrome.tabs.sendMessage(tabId, { action: "ping" });
+    return response?.active === true;
   } catch (_) {
     return false;
   }

@@ -135,9 +135,13 @@ function destroy() {
   } catch (_) {}
 }
 
-// ── Message Listener ───────────────────────────────────────────────────
+// ── Message Listener ────────────────────────────────────────────────────
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.action === "ping") {
+    sendResponse({ active: svelteApp !== null });
+    return true;
+  }
   if (msg.action === "init") {
     create(msg.isPremium ?? false);
   }
@@ -146,7 +150,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-// ── Localhost Auto-Restore ─────────────────────────────────────────────
+// ── Localhost Auto-Restore ──────────────────────────────────────────────
 
 const isLocalhost =
   location.hostname === "localhost" || location.hostname === "127.0.0.1";
